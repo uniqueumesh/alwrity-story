@@ -5,34 +5,60 @@
 #####################################################
 
 import os
+import re
 from pathlib import Path
-from google.api_core import retry
-import google.generativeai as genai
+from google import genai
 import streamlit as st
 
 
-def generate_with_retry(model, prompt):
+def word_count(text):
+    """Return number of words in text."""
+    return len(re.findall(r'\w+', text))
+
+
+def generate_with_retry(client, prompt, model_name):
     """
     Generates content from the model with retry handling for errors.
 
     Parameters:
-        model (GenerativeModel): The generative model to use for content generation.
+        client (genai.Client): The Gemini client to use for content generation.
         prompt (str): The prompt to generate content from.
+        model_name (str): The Gemini model name to use.
 
     Returns:
         str: The generated content.
     """
-    try:
-        # FIXME: Need a progress bar here.
-        return model.generate_content(prompt, request_options={'retry':retry.Retry()})
-    except Exception as e:
-        print(f"Error generating content: {e}")
-        return ""
+    fallback_models = ["gemini-2.5-flash-lite", "gemini-2.5-flash"]
+    models_to_try = [model_name] + [m for m in fallback_models if m != model_name]
+    last_error = None
+
+    for candidate_model in models_to_try:
+        try:
+            return client.models.generate_content(
+                model=candidate_model,
+                contents=prompt,
+            )
+        except Exception as e:
+            last_error = e
+            msg = str(e).upper()
+            # Retry with fallback model only for quota/availability issues.
+            retryable = (
+                "429" in msg
+                or "RESOURCE_EXHAUSTED" in msg
+                or "503" in msg
+                or "UNAVAILABLE" in msg
+            )
+            if retryable:
+                print(f"Model {candidate_model} failed, trying fallback: {e}")
+                continue
+            raise
+
+    raise RuntimeError(f"All fallback models failed. Last error: {last_error}")
 
 
 def ai_story_generator(persona, story_setting, character_input, 
                        plot_elements, writing_style, story_tone, narrative_pov,
-                       audience_age_group, content_rating, ending_preference):
+                       audience_age_group, content_rating, ending_preference, page_length=3):
     """
     Write a story using prompt chaining and iterative generation.
 
@@ -48,8 +74,11 @@ def ai_story_generator(persona, story_setting, character_input,
         The story will be written in a **{writing_style}** style with a **{story_tone}** tone, from a **{narrative_pov}** perspective. 
         It is intended for a **{audience_age_group}** audience with a **{content_rating}** rating. 
         You prefer the story to have a **{ending_preference}** ending.
+        Story length: **{page_length}** pages (about {page_length * 300} words).
         """)
     try:
+        WORDS_PER_PAGE = 300
+        target_words = page_length * WORDS_PER_PAGE
         persona = f"""{persona}
             Write a story with the following details:
 
@@ -117,7 +146,7 @@ def ai_story_generator(persona, story_setting, character_input,
 
         Write an outline for the plot of your story.
         '''
-
+        initial_words = min(2000, target_words)
         starting_prompt = f'''\
         {persona}
 
@@ -135,7 +164,7 @@ def ai_story_generator(persona, story_setting, character_input,
         Start to write the very beginning of the story. You are not expected to finish
         the whole story now. Your writing should be detailed enough that you are only
         scratching the surface of the first bullet of your outline. Try to write AT
-        MINIMUM 2000 WORDS.
+        MINIMUM {initial_words} WORDS. The entire story must not exceed {target_words} words.
 
         {guidelines}
         '''
@@ -164,26 +193,27 @@ def ai_story_generator(persona, story_setting, character_input,
         Your task is to continue where you left off and write the next part of the story.
         You are not expected to finish the whole story now. Your writing should be
         detailed enough that you are only scratching the surface of the next part of
-        your outline. Try to write AT MINIMUM 1000 WORDS. However, only once the story
-        is COMPLETELY finished, write IAMDONE. Remember, do NOT write a whole chapter
-        right now.
+        your outline. Try to write AT MINIMUM 1000 WORDS. The complete story must be at
+        most {target_words} words. When you are near that length, wrap up and write IAMDONE.
+        However, only once the story is COMPLETELY finished, write IAMDONE. Remember, do NOT
+        write a whole chapter right now.
 
         {guidelines}
         '''
         
-        genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-        # Initialize the generative model
-        model = genai.GenerativeModel('gemini-pro')
+        # Initialize Gemini client and preferred model
+        client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
+        model_name = "gemini-2.5-flash-lite"
 
         # Generate prompts
         try:
-            premise = generate_with_retry(model, premise_prompt).text
+            premise = generate_with_retry(client, premise_prompt, model_name).text
             st.info(f"The premise of the story is: {premise}")
         except Exception as err:
             st.error(f"Premise Generation Error: {err}")
             return
 
-        outline = generate_with_retry(model, outline_prompt.format(premise=premise)).text
+        outline = generate_with_retry(client, outline_prompt.format(premise=premise), model_name).text
         with st.expander("🧙‍♂️ Click to Checkout the outline, writing still in progress..", expanded=True):
             st.markdown(f"The Outline of the story is: {outline}\n\n")
         
@@ -194,8 +224,9 @@ def ai_story_generator(persona, story_setting, character_input,
         # Generate starting draft
         with st.status("🦸Story Writing in Progress..", expanded=True) as status:
             try:
-                starting_draft = generate_with_retry(model, 
-                    starting_prompt.format(premise=premise, outline=outline)).text
+                starting_draft = generate_with_retry(
+                    client, starting_prompt.format(premise=premise, outline=outline), model_name
+                ).text
                 status.update(label=f"🪂 Current draft length: {len(starting_draft)} characters")
             except Exception as err:
                 st.error(f"Failed to Generate Story draft: {err}")
@@ -203,8 +234,11 @@ def ai_story_generator(persona, story_setting, character_input,
 
             try:
                 draft = starting_draft
-                continuation = generate_with_retry(model, 
-                    continuation_prompt.format(premise=premise, outline=outline, story_text=draft)).text
+                continuation = generate_with_retry(
+                    client,
+                    continuation_prompt.format(premise=premise, outline=outline, story_text=draft),
+                    model_name,
+                ).text
                 status.update(label=f"🏄 Current draft length: {len(continuation)} characters")
             except Exception as err:
                 st.error(f"Failed to write the initial draft: {err}")
@@ -216,20 +250,26 @@ def ai_story_generator(persona, story_setting, character_input,
             except Exception as err:
                 st.error(f"Failed as: {err} and {continuation}")
         
-            while 'IAMDONE' not in continuation:
+            while 'IAMDONE' not in continuation and word_count(draft) < target_words:
                 try:
-                    status.update(label=f"⏳ Writing in progress... Current draft length: {len(draft)} characters")
-                    continuation = generate_with_retry(model, 
-                        continuation_prompt.format(premise=premise, outline=outline, story_text=draft)).text
+                    status.update(label=f"⏳ Writing... {word_count(draft)} / {target_words} words")
+                    continuation = generate_with_retry(
+                        client,
+                        continuation_prompt.format(premise=premise, outline=outline, story_text=draft),
+                        model_name,
+                    ).text
                     draft += '\n\n' + continuation
                 except Exception as err:
                     st.error(f"Failed to continually write the story: {err}")
                     return
             status.update(label=f"✔️  Story Completed ✔️ ... Scroll Down for the story.")
 
-        # Remove 'IAMDONE' and print the final story
+        # Remove 'IAMDONE' and trim to target word count
         final = draft.replace('IAMDONE', '').strip()
-        return(final)
+        words = final.split()
+        if len(words) > target_words:
+            final = ' '.join(words[:target_words])
+        return final
 
     except Exception as e:
         st.error(f"Main Story writing: An error occurred: {e}")
