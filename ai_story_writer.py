@@ -5,15 +5,12 @@
 #####################################################
 
 import os
-import re
 from pathlib import Path
 from google import genai
 import streamlit as st
 
-
-def word_count(text):
-    """Return number of words in text."""
-    return len(re.findall(r'\w+', text))
+from config import DEFAULT_MODEL_NAME, FALLBACK_MODELS, WORDS_PER_PAGE
+from utils import word_count
 
 
 def generate_with_retry(client, prompt, model_name):
@@ -28,8 +25,7 @@ def generate_with_retry(client, prompt, model_name):
     Returns:
         str: The generated content.
     """
-    fallback_models = ["gemini-2.5-flash-lite", "gemini-2.5-flash"]
-    models_to_try = [model_name] + [m for m in fallback_models if m != model_name]
+    models_to_try = [model_name] + [m for m in FALLBACK_MODELS if m != model_name]
     last_error = None
 
     for candidate_model in models_to_try:
@@ -74,10 +70,9 @@ def ai_story_generator(persona, story_setting, character_input,
         The story will be written in a **{writing_style}** style with a **{story_tone}** tone, from a **{narrative_pov}** perspective. 
         It is intended for a **{audience_age_group}** audience with a **{content_rating}** rating. 
         You prefer the story to have a **{ending_preference}** ending.
-        Story length: **{page_length}** pages (about {page_length * 300} words).
+        Story length: **{page_length}** pages (about {page_length * WORDS_PER_PAGE} words).
         """)
     try:
-        WORDS_PER_PAGE = 300
         target_words = page_length * WORDS_PER_PAGE
         persona = f"""{persona}
             Write a story with the following details:
@@ -213,7 +208,7 @@ def ai_story_generator(persona, story_setting, character_input,
             st.error("API key not set. Add GEMINI_API_KEY in Streamlit Cloud Secrets or set the environment variable.")
             return
         client = genai.Client(api_key=api_key)
-        model_name = "gemini-2.5-flash-lite"
+        model_name = DEFAULT_MODEL_NAME
 
         # Generate prompts
         try:

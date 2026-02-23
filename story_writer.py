@@ -1,9 +1,21 @@
-import time
-import os
-import json
 import streamlit as st
 
 from ai_story_writer import ai_story_generator
+from config import (
+    PERSONAS,
+    PERSONA_DESCRIPTIONS,
+    SLIDER_DEFAULT,
+    SLIDER_MAX,
+    SLIDER_MIN,
+    WORDS_PER_PAGE,
+    WRITING_STYLES,
+    STORY_TONES,
+    NARRATIVE_POVS,
+    AUDIENCE_AGE_GROUPS,
+    CONTENT_RATINGS,
+    ENDING_PREFERENCES,
+)
+from ui import custom_css, hide_elements, set_page_config
 
 
 def main():
@@ -12,95 +24,14 @@ def main():
     hide_elements()
     input_section()
 
-def set_page_config():
-    st.set_page_config(
-        page_title="Alwrity",
-        layout="wide",
-    )
-
-def custom_css():
-    st.markdown("""
-    <style>
-        ::-webkit-scrollbar-track {
-        background: #e1ebf9;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background-color: #90CAF9;
-            border-radius: 10px;
-            border: 3px solid #e1ebf9;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #64B5F6;
-        }
-
-        ::-webkit-scrollbar {
-            width: 16px;
-        }
-
-        div.stButton > button:first-child {
-	        background: #1565C0;
-	        color: white;
-	        border: none;
-	        padding: 12px 24px;
-	        border-radius: 8px;
-	        text-align: center;
-	        text-decoration: none;
-	        display: inline-block;
-	        font-size: 16px;
-	        margin: 10px 2px;
-	        cursor: pointer;
-	        transition: background-color 0.3s ease;
-	        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-	        font-weight: bold;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
-def hide_elements():
-    hide_decoration_bar_style = '<style>header {visibility: hidden;}</style>'
-    st.markdown(hide_decoration_bar_style, unsafe_allow_html=True)
-
-    hide_streamlit_footer = '<style>#MainMenu {visibility: hidden;} footer {visibility: hidden;}</style>'
-    st.markdown(hide_streamlit_footer, unsafe_allow_html=True)
-
-
 
 def input_section():
     st.title("🧕 Alwrity - AI Story Writer")
-    personas = [
-        ("Award-Winning Science Fiction Author", "👽 Award-Winning Science Fiction Author"),
-        ("Historical Fiction Author", "🏺 Historical Fiction Author"),
-        ("Fantasy World Builder", "🧙 Fantasy World Builder"),
-        ("Mystery Novelist", "🕵️ Mystery Novelist"),
-        ("Romantic Poet", "💌 Romantic Poet"),
-        ("Thriller Writer", "🔪 Thriller Writer"),
-        ("Children's Book Author", "📚 Children's Book Author"),
-        ("Satirical Humorist", "😂 Satirical Humorist"),
-        ("Biographical Writer", "📜 Biographical Writer"),
-        ("Dystopian Visionary", "🌆 Dystopian Visionary"),
-        ("Magical Realism Author", "🪄 Magical Realism Author")
-    ]
 
     selected_persona_name = st.selectbox(
         "Select Your Story Writing Persona Or Book Genre",
-        options=[persona[0] for persona in personas]
+        options=[persona[0] for persona in PERSONAS]
     )
-
-    persona_descriptions = {
-    "Award-Winning Science Fiction Author": "You are an award-winning science fiction author with a penchant for expansive, intricately woven stories. Your ultimate goal is to write the next award-winning sci-fi novel.",
-    "Historical Fiction Author": "You are a seasoned historical fiction author, meticulously researching past eras to weave captivating narratives. Your goal is to transport readers to different times and places through your vivid storytelling.",
-    "Fantasy World Builder": "You are a world-building enthusiast, crafting intricate realms filled with magic, mythical creatures, and epic quests. Your ambition is to create the next immersive fantasy saga that captivates readers' imaginations.",
-    "Mystery Novelist": "You are a master of suspense and intrigue, intricately plotting out mysteries with unexpected twists and turns. Your aim is to keep readers on the edge of their seats, eagerly turning pages to unravel the truth.",
-    "Romantic Poet": "You are a romantic at heart, composing verses that capture the essence of love, longing, and human connections. Your dream is to write the next timeless love story that leaves readers swooning.",
-    "Thriller Writer": "You are a thrill-seeker, crafting adrenaline-pumping tales of danger, suspense, and high-stakes action. Your mission is to keep readers hooked from start to finish with heart-pounding thrills and unexpected twists.",
-    "Children's Book Author": "You are a storyteller for the young and young at heart, creating whimsical worlds and lovable characters that inspire imagination and wonder. Your goal is to spark joy and curiosity in young readers with enchanting tales.",
-    "Satirical Humorist": "You are a keen observer of society, using humor and wit to satirize the absurdities of everyday life. Your aim is to entertain and provoke thought, delivering biting social commentary through clever and humorous storytelling.",
-    "Biographical Writer": "You are a chronicler of lives, delving into the stories of real people and events to illuminate the human experience. Your passion is to bring history to life through richly detailed biographies that resonate with readers.",
-    "Dystopian Visionary": "You are a visionary writer, exploring dark and dystopian futures that reflect contemporary fears and anxieties. Your vision is to challenge societal norms and provoke reflection on the path humanity is heading.",
-    "Magical Realism Author": "You are a purveyor of magical realism, blending the ordinary with the extraordinary to create enchanting and thought-provoking tales. Your goal is to blur the lines between reality and fantasy, leaving readers enchanted and introspective."
-        }
 
     # Story Setting
     st.subheader("🌍 Story Setting")
@@ -141,19 +72,19 @@ def input_section():
     with col1:
         writing_style = st.selectbox(
             "**Writing Style:**",
-            ["🧐 Formal", "😎 Casual", "🎼 Poetic", "😂 Humorous"],
+            WRITING_STYLES,
             help="Choose the writing style that fits your story."
         )
     with col2:
         story_tone = st.selectbox(
             "**Story Tone:**",
-            ["🌑 Dark", "☀️ Uplifting", "⏳ Suspenseful", "🎈 Whimsical"],
+            STORY_TONES,
             help="Select the overall tone or mood of the story."
         )
     with col3:
         narrative_pov = st.selectbox(
             "**Narrative Point of View:**",
-            ["👤 First Person", "👥 Third Person Limited", "👁️ Third Person Omniscient"],
+            NARRATIVE_POVS,
             help="Choose the point of view from which the story is told."
         )
     
@@ -163,19 +94,19 @@ def input_section():
     with col1:
         audience_age_group = st.selectbox(
             "**Audience Age Group:**",
-            ["🧒 Children", "👨‍🎓 Young Adults", "🧑‍🦳 Adults"],
+            AUDIENCE_AGE_GROUPS,
             help="Choose the intended audience age group."
         )
     with col2:
         content_rating = st.selectbox(
             "**Content Rating:**",
-            ["🟢 G", "🟡 PG", "🔵 PG-13", "🔴 R"],
+            CONTENT_RATINGS,
             help="Select a content rating for appropriateness."
         )
     with col3:
         ending_preference = st.selectbox(
             "Story Conclusion:",
-            ["😊 Happy", "😢 Tragic", "❓ Cliffhanger", "🔀 Twist"],
+            ENDING_PREFERENCES,
             help="Choose the type of ending you prefer for the story."
         )
 
@@ -183,16 +114,16 @@ def input_section():
     st.subheader("📄 Story Length")
     page_length = st.slider(
         "Number of pages",
-        min_value=1,
-        max_value=10,
-        value=3,
-        help="1 page ≈ 300 words. Shorter stories use fewer API calls."
+        min_value=SLIDER_MIN,
+        max_value=SLIDER_MAX,
+        value=SLIDER_DEFAULT,
+        help=f"1 page ≈ {WORDS_PER_PAGE} words. Shorter stories use fewer API calls."
     )
 
     if st.button('AI, Write a Story..'):
         if character_input.strip():
             with st.spinner("Generating Story...💥💥"):
-                story_content = ai_story_generator(persona_descriptions[selected_persona_name],
+                story_content = ai_story_generator(PERSONA_DESCRIPTIONS[selected_persona_name],
                         story_setting, character_input, plot_elements, writing_style,
                         story_tone, narrative_pov, audience_age_group, content_rating,
                         ending_preference, page_length)
