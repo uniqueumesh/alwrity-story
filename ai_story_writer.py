@@ -201,8 +201,18 @@ def ai_story_generator(persona, story_setting, character_input,
         {guidelines}
         '''
         
-        # Initialize Gemini client and preferred model
-        client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
+        # Initialize Gemini client (st.secrets on Cloud, env var locally)
+        api_key = None
+        try:
+            api_key = st.secrets.get("GEMINI_API_KEY")
+        except Exception:
+            pass
+        if not api_key:
+            api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            st.error("API key not set. Add GEMINI_API_KEY in Streamlit Cloud Secrets or set the environment variable.")
+            return
+        client = genai.Client(api_key=api_key)
         model_name = "gemini-2.5-flash-lite"
 
         # Generate prompts
