@@ -9,9 +9,13 @@ SLIDER_MIN = 1
 SLIDER_MAX = 10
 SLIDER_DEFAULT = 3
 
-# Model
+# Model - Gemini
 DEFAULT_MODEL_NAME = "gemini-2.5-flash-lite"
 FALLBACK_MODELS = ["gemini-2.5-flash-lite", "gemini-2.5-flash"]
+
+# Model - Groq (for Streamlit Cloud; higher free-tier limit)
+GROQ_MODEL_NAME = "llama-3.3-70b-versatile"
+BACKENDS = ["Gemini", "Groq"]
 
 # Personas
 PERSONAS = [
