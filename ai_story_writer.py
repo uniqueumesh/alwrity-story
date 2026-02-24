@@ -15,7 +15,7 @@ from prompts import (
     get_starting_prompt,
     get_continuation_prompt,
 )
-from utils import word_count
+from utils import word_count, trim_to_complete_sentences, format_story_paragraphs
 
 
 def ai_story_generator(persona, story_setting, character_input,
@@ -128,11 +128,12 @@ def ai_story_generator(persona, story_setting, character_input,
                     return
             status.update(label=f"✔️  Story Completed ✔️ ... Scroll Down for the story.")
 
-        # Remove 'IAMDONE' and trim to target word count
+        # Remove 'IAMDONE' and trim to target word count at a sentence boundary
         final = draft.replace('IAMDONE', '').strip()
         words = final.split()
         if len(words) > target_words:
-            final = ' '.join(words[:target_words])
+            final = trim_to_complete_sentences(final, target_words)
+        final = format_story_paragraphs(final)
         return final
 
     except Exception as e:

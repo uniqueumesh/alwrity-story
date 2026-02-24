@@ -18,8 +18,17 @@ Keep things intriguing but not fully resolved.
 Avoid boxing the story into a corner too early.
 Plant the seeds of subplots or potential character arc shifts that can be expanded later.
 
-Remember, your main goal is to write as much as you can. If you get through
-the story too fast, that is bad. Expand, never summarize.
+Completeness and pacing: The story must be complete within the given word limit—a clear
+beginning, middle, and end. If the limit is short (e.g. one page), write one tight,
+complete arc in that space. If the limit is longer, pace the plot so the climax and
+resolution happen before the limit. Never deliver a cut-off or "to be continued" story
+unless the user chose a cliffhanger ending. A 1-page story is one full mini-story; a
+3-page story has room for setup, conflict, and resolution—all within those pages.
+
+Your goal is a complete story within the word limit: every part of the story, including
+the ending the user asked for, must fit within that limit.
+
+Use short paragraphs of about three lines each for readability.
 """
 
 
