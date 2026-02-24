@@ -1,3 +1,5 @@
+import html
+import json
 import streamlit as st
 
 from ai_story_writer import ai_story_generator
@@ -122,6 +124,25 @@ def input_section():
         help=f"1 page ≈ {WORDS_PER_PAGE} words. Shorter stories use fewer API calls."
     )
 
+    current_inputs = (
+        selected_persona_name,
+        story_setting,
+        character_input,
+        plot_elements,
+        writing_style,
+        story_tone,
+        narrative_pov,
+        audience_age_group,
+        content_rating,
+        ending_preference,
+        page_length,
+        backend,
+    )
+    if "last_inputs" in st.session_state and st.session_state["last_inputs"] != current_inputs:
+        for key in ("last_story", "last_inputs"):
+            if key in st.session_state:
+                del st.session_state[key]
+
     if st.button('AI, Write a Story..'):
         if character_input.strip():
             with st.spinner("Generating Story...💥💥"):
@@ -132,9 +153,20 @@ def input_section():
                     ending_preference, page_length, backend=backend,
                 )
                 if story_content:
-                    st.subheader('**🧕 Your Awesome Story:**')
-                    st.markdown(story_content)
+                    st.session_state["last_story"] = story_content
+                    st.session_state["last_inputs"] = current_inputs
                 else:
                     st.error("💥 **Failed to generate Story. Please try again!**")
         else:
             st.error("Describe the story you have in your mind.. !")
+
+    if st.session_state.get("last_story") and st.session_state.get("last_inputs") == current_inputs:
+        st.subheader('**🧕 Your Awesome Story:**')
+        st.markdown(st.session_state["last_story"])
+        story_escaped = html.escape(st.session_state["last_story"])
+        copy_html = (
+            f'<textarea id="story-copy-buf" style="display:none">{story_escaped}</textarea>'
+            '<button onclick="navigator.clipboard.writeText(document.getElementById(\'story-copy-buf\').value); '
+            "this.textContent='Copied!'; setTimeout(function(){ this.textContent='Copy story'; }, 2000);\">Copy story</button>"
+        )
+        st.components.v1.html(copy_html, height=50)
