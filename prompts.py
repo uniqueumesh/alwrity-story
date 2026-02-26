@@ -6,27 +6,33 @@ Edit prompts here to improve results without changing generation logic.
 WRITING_GUIDELINES = """\
 Writing Guidelines:
 
-Delve deeper. Lose yourself in the world you're building. Unleash vivid
-descriptions to paint the scenes in your reader's mind.
-Develop your characters — let their motivations, fears, and complexities unfold naturally.
-Weave in the threads of your outline, but don't feel constrained by it.
-Allow your story to surprise you as you write. Use rich imagery, sensory details, and
-evocative language to bring the setting, characters, and events to life.
-Introduce elements subtly that can blossom into complex subplots, relationships,
-or worldbuilding details later in the story.
-Keep things intriguing but not fully resolved.
-Avoid boxing the story into a corner too early.
-Plant the seeds of subplots or potential character arc shifts that can be expanded later.
+Engagement: Open with a hook—a striking image, a line of dialogue, or a moment of
+action or tension. Avoid slow, generic openings like "Once upon a time" or long
+setting dumps before something happens. Keep the reader curious: every scene should
+have a want, a question, or a stake. Move the story forward; avoid long stretches
+where nothing changes. Include conflict or tension early and carry it through; even
+quiet stories need a central question or obstacle.
 
-Completeness and pacing: The story must be complete within the given word limit—a clear
-beginning, middle, and end. If the limit is short (e.g. one page), write one tight,
-complete arc in that space. If the limit is longer, pace the plot so the climax and
-resolution happen before the limit. Never deliver a cut-off or "to be continued" story
-unless the user chose a cliffhanger ending. A 1-page story is one full mini-story; a
-3-page story has room for setup, conflict, and resolution—all within those pages.
+Craft: Show, don't just tell—use concrete actions, sensory details, and dialogue
+instead of stating feelings or traits (e.g. prefer "She slammed the door" over "She
+was angry"). Vary sentence length: mix short punchy lines with longer ones,
+especially in moments of action or emotion. Be specific: use concrete images and
+details rather than vague words like "beautiful," "interesting," or "very." Avoid
+repeating the same idea in different words; each paragraph should add new
+information or deepen the scene.
 
-Your goal is a complete story within the word limit: every part of the story, including
-the ending the user asked for, must fit within that limit.
+Character and plot: Develop characters through their actions and choices. Weave in
+the outline but allow surprises. Use rich imagery and sensory detail. Plant
+subplots subtly; avoid boxing the story in too early.
+
+Completeness and pacing: The story must be complete within the given word limit—a
+clear beginning, middle, and end. If the limit is short (e.g. one page), write one
+tight, complete arc in that space. If the limit is longer, pace the plot so the
+climax and resolution happen before the limit. Never deliver a cut-off or "to be
+continued" story unless the user chose a cliffhanger ending. A 1-page story is one
+full mini-story; a 3-page story has room for setup, conflict, and resolution—all
+within those pages. Your goal is a complete story within the word limit: every part
+of the story, including the ending the user asked for, must fit within that limit.
 
 Use short paragraphs of about three lines each for readability.
 """
@@ -39,7 +45,7 @@ def build_story_persona(persona, story_setting, character_input, plot_elements,
     return f"""{persona}
             Write a story with the following details:
 
-		**The stroy Setting is:**
+		**The story Setting is:**
 		{story_setting}
 		
 		**The Characters of the story are:**
@@ -63,8 +69,9 @@ def build_story_persona(persona, story_setting, character_input, plot_elements,
 		**Story Ending:**
 		{ending_preference}
 		
-		Make sure the story is engaging and tailored to the specified audience and content rating. 
+		Make sure the story is engaging and tailored to the specified audience and content rating.
         Ensure the ending aligns with the preference indicated.
+        Write so the reader is pulled in from the first line and stays curious; favor concrete detail and tension over vague or generic description.
 
         """
 
@@ -87,7 +94,7 @@ def get_outline_prompt(persona_full):
 
         {{premise}}
 
-        Write an outline for the plot of your story.
+        Write an outline for the plot of your story. Include a clear conflict or central question and a turning point toward the ending.
         """
 
 
@@ -106,6 +113,8 @@ def get_starting_prompt(persona_full, initial_words, target_words):
 
         First, silently review the outline and the premise. Consider how to start the
         story.
+
+        Open with a hook—a specific image, line of dialogue, or moment of action or tension—so the reader is drawn in immediately.
 
         Start to write the very beginning of the story. You are not expected to finish
         the whole story now. Your writing should be detailed enough that you are only
@@ -138,6 +147,8 @@ def get_continuation_prompt(persona_full, target_words):
 
         First, silently review the outline and story so far. Identify what the single
         next part of your outline you should write.
+
+        Keep the reader curious: this section should raise a question, deepen conflict, or deliver a small surprise; avoid filler or repetition.
 
         Your task is to continue where you left off and write the next part of the story.
         You are not expected to finish the whole story now. Your writing should be
